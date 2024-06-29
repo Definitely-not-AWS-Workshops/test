@@ -76,7 +76,6 @@ jobs:
         with:
           aws-region: ${{ inputs.aws-region }}
           role-to-assume: ${{ inputs.role-to-assume }}
-          role-duration-seconds: 600
 
       - name: Login to Amazon ECR
         id: login-ecr
