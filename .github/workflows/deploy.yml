@@ -1,0 +1,129 @@
+#  This workflow will be called in release and rollback workflows
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      rollback:
+        default: false
+        type: boolean
+      download-artifact-name:
+        default: ""
+        type: string
+      download-artifact-path:
+        default: ""
+        type: string
+
+      aws-region:
+        default: us-east-1
+        type: string
+      role-to-assume:
+        required: true
+        type: string
+
+      ecr-repository:
+        required: true
+        type: string
+      image-tag:
+        default: latest
+        type: string
+      task-definition:
+        required: true
+        type: string
+      container-name:
+        required: true
+        type: string
+      ecs-cluster:
+        required: true
+        type: string
+      ecs-service:
+        required: true
+        type: string
+
+      codedeploy-application:
+        required: true
+        type: string
+      codedeploy-application-group:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      allow-dowload-artifact: ${{ !inputs.rollback && inputs.download-artifact-name != '' && inputs.download-artifact-path != '' }}
+    steps:
+      - name: Download artifact
+        if: ${{ env.allow-dowload-artifact }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.download-artifact-name }}
+          path: ${{ inputs.download-artifact-path }}
+
+      - name: Load image
+        if: ${{ env.allow-dowload-artifact }}
+        run: docker load --input ${{ inputs.download-artifact-path }}/${{ inputs.download-artifact-name }}
+
+      - name: Checkout appspec.yml
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: appspec.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ inputs.role-to-assume }}
+          role-duration-seconds: 600
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Create image name
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.ecr-repository }}
+          IMAGE_TAG: ${{ inputs.image-tag }}
+        run: |
+          echo "name=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Tag image for releasing
+        if: ${{ !inputs.rollback }}
+        run: docker tag localbuild/prepared-image:latest ${{ steps.image.outputs.name }}
+
+      - name: Push Docker image to Amazon ECR
+        if: ${{ !inputs.rollback }}
+        run: docker push ${{ steps.image.outputs.name }}
+
+      - name: Pull Docker image from Amazon ECR
+        if: ${{ inputs.rollback }}
+        run: docker pull ${{ steps.image.outputs.name }}
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+          --task-definition ${{ inputs.task-definition }} \
+          --query taskDefinition > task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ inputs.container-name }}
+          image: ${{ steps.image.outputs.name }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          cluster: ${{ inputs.ecs-cluster }}
+          service: ${{ inputs.ecs-service }}
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          wait-for-service-stability: true
+          codedeploy-appspec: appspec.yml
+          codedeploy-application: ${{ inputs.codedeploy-application }}
+          codedeploy-deployment-group: ${{ inputs.codedeploy-application-group }}

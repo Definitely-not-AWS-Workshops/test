@@ -1,0 +1,27 @@
+name: Rollback
+
+on:
+  # Allow manual rollback
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Specify the version to rollback to, in the format "vx.x.x" (e.g., "v0.0.1")
+        type: string
+        required: true
+
+jobs:
+  rollback:
+    name: Rollback
+    uses: ./.github/workflows/deploy.yml
+    with:
+      rollback: true
+      aws-region: ${{ vars.AWS_REGION }}
+      role-to-assume: arn:aws:iam::891377174586:role/gha-role
+      ecr-repository: ${{ vars.PROJECT }}
+      image-tag: ${{ inputs.version }}
+      task-definition: ${{ vars.PROJECT }}
+      container-name: ${{ vars.PROJECT }}
+      ecs-cluster: ${{ vars.ECS_CLUSTER }}
+      ecs-service: ${{ vars.PROJECT }}
+      codedeploy-application: ${{ vars.CODEDEPLOY_APPLICATION }}
+      codedeploy-application-group: ${{ vars.CODEDEPLOY_APPLICATION_GROUP }}

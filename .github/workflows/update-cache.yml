@@ -1,0 +1,42 @@
+name: Update pipeline cache
+
+on:
+  push:
+    branches: [main]
+
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: "17"
+
+jobs:
+  update-gradle-cache:
+    name: Update Gradle cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+
+      - uses: actions/cache@v4
+        name: Cache dependencies
+        id: cache
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+          lookup-only: true
+
+      - name: Update cache
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: |
+          chmod 777 gradlew
+          ./gradlew dependencies
