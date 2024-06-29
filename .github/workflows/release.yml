@@ -5,7 +5,7 @@ on:
     tags:
       # version tag starts with "v" and is followed by three dot-separated numbers,
       # each of which is either "0" or a non-zero number without leading zeros.
-      - 'v([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)'
+      - "v*.*.*"
 
 env:
   TEST_IMAGE_NAME: localbuild/prepared-image:latest
