@@ -63,7 +63,7 @@ jobs:
 
       - name: Load image
         if: ${{ env.allow-dowload-artifact }}
-        run: docker load --input ${{ inputs.download-artifact-path }}/${{ inputs.download-artifact-name }}
+        run: docker load --input ${{ inputs.download-artifact-path }}/${{ inputs.download-artifact-name }}.tar
 
       - name: Checkout appspec.yml
         uses: actions/checkout@v4
