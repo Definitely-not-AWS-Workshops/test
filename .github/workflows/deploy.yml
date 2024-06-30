@@ -5,8 +5,8 @@ on:
   workflow_call:
     inputs:
       rollback:
-        default: false
-        type: boolean
+        default: "false"
+        type: string
       download-artifact-name:
         default: ""
         type: string
