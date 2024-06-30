@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
-            .github/scripts
+            .github/**
           sparse-checkout-cone-mode: false
 
       - run: ls -a
@@ -37,7 +37,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.ROLL_TO_ASSUME }}
+          role-to-assume: ${{ ${{ vars.ROLE_TO_ASSUME }} }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -53,7 +53,7 @@ jobs:
   #   with:
   #     rollback: true
   #     aws-region: ${{ vars.AWS_REGION }}
-  #     role-to-assume: ${{ vars.ROLL_TO_ASSUME }}
+  #     role-to-assume: ${{ ${{ vars.ROLE_TO_ASSUME }} }}
   #     ecr-repository: ${{ vars.PROJECT }}
   #     image-tag: ${{ inputs.version }}
   #     task-definition: ${{ vars.PROJECT }}
