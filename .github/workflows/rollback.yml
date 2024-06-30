@@ -20,13 +20,13 @@ jobs:
     steps:
       - name: Validate version format
         run: |
-          if [[ ! ${{ inputs.version }} =~ ^v([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)$ ]]; then
+          if [[ ! "${{ inputs.version }}"" =~ ^v([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)$ ]]; then
             echo "Invalid version format. version tag starts with \"v\" and is followed by three dot-separated numbers," \
                  " each of which is either \"0\" or a non-zero number without leading zeros. (e.g., 'v1.0.0')."
             exit 1
           fi
 
-          echo "Version format is valid: ${{ inputs.version }}
+          echo "Version format is valid: ${{ inputs.version }}"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
