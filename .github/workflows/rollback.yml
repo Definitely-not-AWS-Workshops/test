@@ -14,7 +14,7 @@ jobs:
     name: Rollback
     uses: ./.github/workflows/deploy.yml
     with:
-      rollback: true
+      rollback: "true"
       aws-region: ${{ vars.AWS_REGION }}
       role-to-assume: arn:aws:iam::891377174586:role/gha-role
       ecr-repository: ${{ vars.PROJECT }}
