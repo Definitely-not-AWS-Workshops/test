@@ -54,6 +54,9 @@ jobs:
     env:
       allow-dowload-artifact: ${{ inputs.rollback == 'false' && inputs.download-artifact-name != '' && inputs.download-artifact-path != '' }}
     steps:
+      - run: echo ${{ inputs.rollback }}
+      - run: echo ${{ env.allow-dowload-artifact }}
+
       - name: Download artifact
         if: ${{ env.allow-dowload-artifact }}
         uses: actions/download-artifact@v4
