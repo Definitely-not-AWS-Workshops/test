@@ -31,7 +31,7 @@ spring:
   #   active: devz
   datasource:
     driver-class-name: com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver
-    username: rds!db-67422a28-5471-4c19-96f5-ec060acd07a2
+    username: rds!db-2ed86cbe-34d9-4ff4-a2cf-99fdef0043bb
     url: jdbc-secretsmanager:postgresql://awsome-books-db-server.cliq64c00zrx.us-east-1.rds.amazonaws.com:5432/awsome_books
     # driver-class-name: com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver
     # username: <AWS-SECRECTS-MANAGER-NAME>
