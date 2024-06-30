@@ -76,7 +76,7 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       aws-region: ${{ vars.AWS_REGION }}
-      role-to-assume: arn:aws:iam::891377174586:role/gha-role
+      role-to-assume: ${{ vars.ROLL_TO_ASSUME }}
       download-artifact-name: prepared-image
       download-artifact-path: /tmp
       ecr-repository: ${{ vars.PROJECT }}

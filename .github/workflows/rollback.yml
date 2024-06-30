@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Specify the version to rollback to, in the format "v*.*.*" (e.g., "v0.0.1")
+        description: Specify the semantic version to rollback to, in the format "v*.*.*" (e.g., "v0.0.1")
         type: string
         required: true
 
@@ -14,41 +14,37 @@ permissions:
   contents: read
 
 jobs:
-  check-version:
-    name: Validate version
+  check-semantic-version:
+    name: Validate semantic version
     runs-on: ubuntu-latest
+    env:
+      SCRIPTS_PATH: ./github/scripts
+      ECR_REPOSITORY: ${{ vars.PROJECT }}
     steps:
-      - name: Validate version format
-        run: |
-          if [[ ! "${{ inputs.version }}" =~ ^v([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)$ ]]; then
-            echo "Invalid version format. version tag starts with \"v\" and is followed by three dot-separated numbers," \
-                 " each of which is either \"0\" or a non-zero number without leading zeros. (e.g., 'v1.0.0')."
-            exit 1
-          fi
-
-          echo "Version format is valid: ${{ inputs.version }}"
+      - name: Validate ${{ inputs.version }} semantic version format
+        run: ${{ env.SCRIPTS_PATH }}/validate-version-format.sh ${{ inputs.version }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::891377174586:role/gha-role
+          role-to-assume: ${{ vars.ROLL_TO_ASSUME }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Check version existed in AWS ECR repository
-        run: aws ecr describe-images --repository-name ${{ vars.PROJECT }} --image-ids imageTag=${{ inputs.version }}
+      - name: Check ${{ inputs.version }} version existed in ${{ env.ECR_REPOSITORY }} ECR repository
+        run: ${{ env.SCRIPTS_PATH }}/check-version-exists.sh ${{ env.ECR_REPOSITORY }} ${{ inputs.version }}
 
   # rollback:
   #   name: Rollback
-  #   needs: [check-version]
+  #   needs: [check-sem-version]
   #   uses: ./.github/workflows/deploy.yml
   #   with:
   #     rollback: true
   #     aws-region: ${{ vars.AWS_REGION }}
-  #     role-to-assume: arn:aws:iam::891377174586:role/gha-role
+  #     role-to-assume: ${{ vars.ROLL_TO_ASSUME }}
   #     ecr-repository: ${{ vars.PROJECT }}
   #     image-tag: ${{ inputs.version }}
   #     task-definition: ${{ vars.PROJECT }}
