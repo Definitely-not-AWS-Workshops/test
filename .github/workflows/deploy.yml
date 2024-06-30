@@ -5,8 +5,8 @@ on:
   workflow_call:
     inputs:
       rollback:
-        default: "false"
-        type: string
+        default: false
+        type: boolean
       download-artifact-name:
         default: ""
         type: string
@@ -52,7 +52,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     env:
-      allow-dowload-artifact: ${{ inputs.rollback == 'false' && inputs.download-artifact-name != '' && inputs.download-artifact-path != '' }}
+      allow-dowload-artifact: ${{ inputs.rollback && inputs.download-artifact-name != '' && inputs.download-artifact-path != '' }}
     steps:
       - run: echo ${{ inputs.rollback }}
       - run: echo ${{ env.allow-dowload-artifact }}
@@ -94,15 +94,15 @@ jobs:
           echo "name=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Tag image for releasing
-        if: ${{ inputs.rollback == 'false' }}
+        if: ${{ inputs.rollback }}
         run: docker tag localbuild/prepared-image:latest ${{ steps.image.outputs.name }}
 
       - name: Push Docker image to Amazon ECR
-        if: ${{ inputs.rollback == 'false' }}
+        if: ${{ inputs.rollback }}
         run: docker push ${{ steps.image.outputs.name }}
 
       - name: Pull Docker image from Amazon ECR
-        if: ${{ inputs.rollback == 'true' }}
+        if: ${{ inputs.rollback }}
         run: docker pull ${{ steps.image.outputs.name }}
 
       - name: Download task definition
