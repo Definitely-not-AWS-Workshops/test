@@ -24,7 +24,7 @@ jobs:
         with:
           sparse-checkout: |
             .github
-          # sparse-checkout-cone-mode: false
+          sparse-checkout-cone-mode: false
 
       - run: ls
 
