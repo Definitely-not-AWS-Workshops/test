@@ -1,4 +1,4 @@
-name: Update pipeline cache
+name: Update dependency cache
 
 on:
   push:
@@ -6,22 +6,19 @@ on:
 
   workflow_dispatch:
 
-env:
-  JAVA_VERSION: "17"
-
 jobs:
   update-gradle-cache:
-    name: Update Gradle cache
+    name: Update dependency cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
+      - name: Set up JDK ${{ vars.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: temurin
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: ${{ vars.JAVA_DISTRIBUTION }}
 
       - uses: actions/cache@v4
         name: Cache dependencies

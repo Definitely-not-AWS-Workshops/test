@@ -3,8 +3,6 @@ name: Release
 on:
   push:
     tags:
-      # version tag starts with "v" and is followed by three dot-separated numbers,
-      # each of which is either "0" or a non-zero number without leading zeros.
       - "v*.*.*"
 
 env:
