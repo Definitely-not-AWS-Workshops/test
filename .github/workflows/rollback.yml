@@ -20,13 +20,15 @@ jobs:
     env:
       ECR_REPOSITORY: ${{ vars.PROJECT }}
     steps:
+      - run: ls -a
+
       - uses: actions/checkout@v4
         # with:
         #   sparse-checkout: |
         #     .github
         #   sparse-checkout-cone-mode: false
 
-      - run: ls
+      - run: ls -a
 
       - name: Validate format of semantic version ${{ inputs.version }}
         run: ./scripts/validate-version-format.sh ${{ inputs.version }}
