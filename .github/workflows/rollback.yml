@@ -9,51 +9,18 @@ on:
         type: string
         required: true
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   check-semantic-version:
-    name: Check semantic version
-    runs-on: ubuntu-latest
-    env:
-      ECR_REPOSITORY: ${{ vars.PROJECT }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            .github
-          sparse-checkout-cone-mode: false
-
-      - run: chmod +x -R ./.github/scripts
-
-      - name: Create path to scripts
-        id: scripts
-        run: |
-          echo "path=./.github/scripts" >> $GITHUB_OUTPUT
-
-      - name: Validate format of semantic version ${{ inputs.version }}
-        run: ${{ steps.scripts.outputs.path }}/validate-version-format.sh ${{ inputs.version }}
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.ROLE_TO_ASSUME }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Check version ${{ inputs.version }} existed in AWS ECR repository ${{ env.ECR_REPOSITORY }}
-        run: ${{ steps.scripts.outputs.path }}/check-version-exists.sh ${{ env.ECR_REPOSITORY }} ${{ inputs.version }}
+    name: check-semantic-version
+    uses: ./.github/workflows/wc-check-semantic-version.yml
+    with:
+      ecr-repository: ${{ vars.PROJECT }}
+      version: ${{ inputs.version }}
 
   # rollback:
   #   name: Rollback
-  #   needs: [check-sem-version]
-  #   uses: ./.github/workflows/deploy.yml
+  #   needs: [check-semantic-version]
+  #   uses: ./.github/workflows/wc-deploy.yml
   #   with:
   #     rollback: true
   #     aws-region: ${{ vars.AWS_REGION }}

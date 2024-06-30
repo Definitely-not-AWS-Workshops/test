@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-gradle-cache:
+  update-dependency-cache:
     name: Update dependency cache
     runs-on: ubuntu-latest
     steps:
@@ -32,8 +32,8 @@ jobs:
             ${{ runner.os }}-gradle-
           lookup-only: true
 
-      - name: Update cache
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      - if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        name: Update cache
         run: |
-          chmod 777 gradlew
+          chmod +x gradlew
           ./gradlew dependencies

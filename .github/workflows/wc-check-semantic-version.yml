@@ -1,0 +1,58 @@
+#  This workflow will be called in release and rollback workflows
+name: Check semantic version
+
+on:
+  workflow_call:
+    inputs:
+      ecr-repository:
+        description: "ECR repository name where the Docker image is stored."
+        default: ""
+        type: string
+
+      version:
+        description: "Semantic version tag of the Docker image to check."
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  check-semantic-version:
+    name: Check semantic version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+          sparse-checkout-cone-mode: false
+
+      - name: Set permissions to run scripts
+        run: chmod +x -R ./.github/scripts
+
+      - name: Create path to scripts
+        id: scripts
+        run: |
+          echo "path=./.github/scripts" >> $GITHUB_OUTPUT
+
+      - name: Validate format of semantic version ${{ inputs.version }}
+        run: ${{ steps.scripts.outputs.path }}/validate-version-format.sh ${{ inputs.version }}
+
+      - if: ${{ inputs.ecr-repository != '' }}
+        name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.ROLE_TO_ASSUME }}
+
+      - if: ${{ inputs.ecr-repository != '' }}
+        name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - if: ${{ inputs.ecr-repository != '' }}
+        name: Check version ${{ inputs.version }} existed in AWS ECR repository ${{ inputs.ECR_REPOSITORY }}
+        run: ${{ steps.scripts.outputs.path }}/check-version-exists.sh ${{ inputs.ECR_REPOSITORY }} ${{ inputs.version }}

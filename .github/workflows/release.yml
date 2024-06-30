@@ -8,13 +8,16 @@ on:
 env:
   TEST_IMAGE_NAME: localbuild/prepared-image:latest
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
+  check-semantic-version:
+    name: check-semantic-version
+    uses: ./.github/workflows/wc-check-semantic-version.yml
+    with:
+      version: ${{ github.ref_name }}
+
   build-image:
     name: Build image
+    needs: [check-semantic-version]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -63,9 +66,9 @@ jobs:
           fail-build: false
           severity-cutoff: high
 
-      - name: Upload vulnerability report
+      - if: ${{ !cancelled() }}
+        name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
-        if: ${{ !cancelled() }}
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
           category: image-scanning-report
@@ -73,7 +76,7 @@ jobs:
   release:
     name: Release
     needs: [scan-image]
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/wc-deploy.yml
     with:
       aws-region: ${{ vars.AWS_REGION }}
       role-to-assume: ${{ vars.ROLE_TO_ASSUME }}
@@ -87,74 +90,3 @@ jobs:
       ecs-service: ${{ vars.PROJECT }}
       codedeploy-application: ${{ vars.CODEDEPLOY_APPLICATION }}
       codedeploy-application-group: ${{ vars.CODEDEPLOY_APPLICATION_GROUP }}
-
-  # release:
-  #   name: Release
-  #   needs: [scan-image]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Download artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: prepared-image
-  #         path: /tmp
-
-  #     - name: Load image
-  #       run: docker load --input /tmp/prepared-image.tar
-
-  #     - name: Checkout appspec.yml
-  #       uses: actions/checkout@v4
-  #       with:
-  #         sparse-checkout: appspec.yml
-  #         sparse-checkout-cone-mode: false
-
-  #     - name: Configure AWS Credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-region: ${{ env.AWS_REGION }}
-  #         role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
-  #         role-duration-seconds: 600
-
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v2
-
-  #     - name: Create image name
-  #       id: image
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         ECR_REPOSITORY: ${{ env.PROJECT_NAME }}
-  #         RELEASE_IMAGE_TAG: ${{ github.ref_name }}
-  #       run: |
-  #         echo "release_name=$ECR_REGISTRY/$ECR_REPOSITORY:$RELEASE_IMAGE_TAG" >> $GITHUB_OUTPUT
-
-  #     - name: Tag image for releasing
-  #       run: docker tag ${{ env.TEST_IMAGE_NAME }} ${{ steps.image.outputs.release_name }}
-
-  #     - name: Push Docker image to Amazon ECR
-  #       run: docker push ${{ steps.image.outputs.release_name }}
-
-  #     - name: Download task definition
-  #       run: |
-  #         aws ecs describe-task-definition \
-  #         --task-definition ${{ env.PROJECT_NAME }} \
-  #          --query taskDefinition > task-definition.json
-
-  #     - name: Fill in the new image ID in the Amazon ECS task definition
-  #       id: task-def
-  #       uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #       with:
-  #         task-definition: task-definition.json
-  #         container-name: ${{ env.PROJECT_NAME }}
-  #         image: ${{ steps.image.outputs.release_name }}
-
-  #     - name: Deploy Amazon ECS task definition
-  #       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #       with:
-  #         cluster: fcj
-  #         service: ${{ env.PROJECT_NAME }}
-  #         task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #         wait-for-service-stability: true
-  #         codedeploy-appspec: appspec.yml
-  #         codedeploy-application: <AWS-CODEDEPLOY-APPLICATION>
-  #         codedeploy-deployment-group: <AWS-CODEDEPLOY-DEPLOYMENT-GROUP>

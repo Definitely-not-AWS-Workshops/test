@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  workflow_dispatch:
-
   merge_group:
     branches: [main]
 
@@ -16,9 +14,7 @@ on:
   #     - .github/workflows/**
   #     - Dockerfile
 
-env:
-  JAVA_VERSION: "17"
-  JAVA_DISTRIBUTION: temurin
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -50,7 +46,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          chmod 777 gradlew
+          chmod +x gradlew
           ./gradlew test --offline
 
       - name: Upload unit test report
@@ -66,11 +62,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
+      - name: Set up JDK ${{ vars.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: ${{ vars.JAVA_DISTRIBUTION }}
 
       - uses: actions/cache@v4
         name: Cache dependencies
@@ -84,7 +80,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          chmod 777 gradlew
+          chmod +x gradlew
           ./gradlew integrationTest --offline
 
       - name: Upload integration test report
@@ -103,11 +99,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
+      - name: Set up JDK ${{ vars.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: ${{ vars.JAVA_DISTRIBUTION }}
 
       - uses: actions/cache@v4
         name: Cache dependencies
@@ -120,7 +116,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - run: |
-          chmod 777 gradlew
+          chmod +x gradlew
           ./gradlew build -x test --offline
 
       - name: Code vulnerability scanning
@@ -131,9 +127,9 @@ jobs:
           fail-build: false
           severity-cutoff: high
 
-      - name: Upload vulnerability report
+      - if: ${{ !cancelled() }}
+        name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
-        if: ${{ !cancelled() }}
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
           category: source-code-scanning-report
@@ -167,9 +163,9 @@ jobs:
           fail-build: false
           severity-cutoff: high
 
-      - name: Upload vulnerability report
+      - if: ${{ !cancelled() }}
+        name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
-        if: ${{ !cancelled() }}
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
           category: image-scanning-report
