@@ -18,11 +18,17 @@ jobs:
     name: Check semantic version
     runs-on: ubuntu-latest
     env:
-      SCRIPTS_PATH: ./.github/scripts
       ECR_REPOSITORY: ${{ vars.PROJECT }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ./.github/scripts
+          sparse-checkout-cone-mode: false
+
+      - run: ls
+
       - name: Validate format of semantic version ${{ inputs.version }}
-        run: ${{ env.SCRIPTS_PATH }}/validate-version-format.sh ${{ inputs.version }}
+        run: ./validate-version-format.sh ${{ inputs.version }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -35,7 +41,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Check version ${{ inputs.version }} existed in AWS ECR repository ${{ env.ECR_REPOSITORY }}
-        run: ${{ env.SCRIPTS_PATH }}/check-version-exists.sh ${{ env.ECR_REPOSITORY }} ${{ inputs.version }}
+        run: ./check-version-exists.sh ${{ env.ECR_REPOSITORY }} ${{ inputs.version }}
 
   # rollback:
   #   name: Rollback
