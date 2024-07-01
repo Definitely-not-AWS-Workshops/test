@@ -65,16 +65,16 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     env:
-      allow-dowload-artifact: ${{ inputs.rollback == 'false' && inputs.download-artifact-name != '' && inputs.download-artifact-path != '' }}
+      allow-dowload-artifact: ${{ !inputs.rollback && inputs.download-artifact-name != '' && inputs.download-artifact-path != '' }}
     steps:
-      - if: ${{ env.allow-dowload-artifact == 'true' }}
+      - if: ${{ env.allow-dowload-artifact }}
         name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.download-artifact-name }}
           path: ${{ inputs.download-artifact-path }}
 
-      - if: ${{ env.allow-dowload-artifact == 'true' }}
+      - if: ${{ env.allow-dowload-artifact }}
         name: Load image
         run: docker load --input ${{ inputs.download-artifact-path }}/${{ inputs.download-artifact-name }}.tar
 
@@ -103,15 +103,15 @@ jobs:
         run: |
           echo "name=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - if: ${{ inputs.rollback == 'false' }}
+      - if: ${{ !inputs.rollback }}
         name: Tag image for releasing
         run: docker tag localbuild/prepared-image:latest ${{ steps.image.outputs.name }}
 
-      - if: ${{ inputs.rollback == 'false' }}
+      - if: ${{ !inputs.rollback }}
         name: Push Docker image to Amazon ECR
         run: docker push ${{ steps.image.outputs.name }}
 
-      - if: ${{ inputs.rollback == 'true' }}
+      - if: ${{ inputs.rollback }}
         name: Pull Docker image from Amazon ECR
         run: docker pull ${{ steps.image.outputs.name }}
 
