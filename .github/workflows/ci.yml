@@ -47,7 +47,7 @@ jobs:
       - name: Run unit tests
         run: |
           chmod +x gradlew
-          ./gradlew test --offline
+          ./gradlew test
 
       - name: Upload unit test report
         uses: actions/upload-artifact@v4
@@ -81,7 +81,7 @@ jobs:
       - name: Run integration tests
         run: |
           chmod +x gradlew
-          ./gradlew integrationTest --offline
+          ./gradlew integrationTest
 
       - name: Upload integration test report
         uses: actions/upload-artifact@v4
@@ -117,7 +117,7 @@ jobs:
 
       - run: |
           chmod +x gradlew
-          ./gradlew build -x test --offline
+          ./gradlew build -x test
 
       - name: Code vulnerability scanning
         uses: anchore/scan-action@v3

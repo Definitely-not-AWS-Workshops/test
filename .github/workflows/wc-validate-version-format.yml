@@ -1,26 +1,17 @@
 #  This workflow will be called in release and rollback workflows
-name: Check semantic version
+name: Check format of semantic version
 
 on:
   workflow_call:
     inputs:
-      ecr-repository:
-        description: "ECR repository name where the Docker image is stored."
-        default: ""
-        type: string
-
       version:
         description: "Semantic version tag of the Docker image to check."
         required: true
         type: string
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
-  check-semantic-version:
-    name: Check semantic version
+  check-version-format:
+    name: Check semantic version format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

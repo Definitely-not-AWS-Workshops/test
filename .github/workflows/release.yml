@@ -9,15 +9,15 @@ env:
   TEST_IMAGE_NAME: localbuild/prepared-image:latest
 
 jobs:
-  check-semantic-version:
-    name: check-semantic-version
-    uses: ./.github/workflows/wc-check-semantic-version.yml
+  validate-version-format:
+    name: Validate semantic version format
+    uses: ./.github/workflows/wc-validate-version-format.yml
     with:
       version: ${{ github.ref_name }}
 
   build-image:
     name: Build image
-    needs: [check-semantic-version]
+    needs: [validate-version-format]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
