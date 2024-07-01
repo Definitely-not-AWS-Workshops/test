@@ -47,4 +47,4 @@ spring:
 
 
 polar:
-  greeting: Welcome to the prod book catalog!
+  greeting: Welcome to the prod book catalog v0.0.2!
