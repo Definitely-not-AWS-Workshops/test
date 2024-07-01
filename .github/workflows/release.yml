@@ -8,6 +8,10 @@ on:
 env:
   TEST_IMAGE_NAME: localbuild/prepared-image:latest
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   validate-version-format:
     name: Validate semantic version format
